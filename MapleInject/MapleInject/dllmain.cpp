@@ -1,35 +1,39 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
+
+
 #include "stdafx.h"
-#include "stdio.h"
-#include "windows.h"
+#include "main.h"
+
+
+
+HMODULE this_hmodule; //preserve our handle to our dll, we use this for unloading
+DWORD this_threadid; //preserve our main thread handle
+bool running; //used by main thread to check if we are still in business
+
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
 					 )
 {
-	FILE *file;
-	fopen_s(&file, "C:\\temp.txt", "a+");
-
+	if (hModule != 0) {
+		this_hmodule = hModule;
+	}
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		fprintf(file, "DLL attach function called.\n");
+		//Prevent DLL_THREAD_ATTACH and DLL_THREAD_DETACH to our dll,
+		//this enables unloading this dll.
+		DisableThreadLibraryCalls(this_hmodule);
 		break;
 	case DLL_PROCESS_DETACH:
-		fprintf(file, "DLL detach function called.\n");
-		break;
-	case DLL_THREAD_ATTACH:
-		fprintf(file, "DLL thread attach function called.\n");
-		break;
-	case DLL_THREAD_DETACH:
-		fprintf(file, "DLL thread detach function called.\n");
+		running = false; //make threads stop.
 		break;
 	}
 
-	/* close file */
-	fclose(file);
 	return TRUE;
 }
+
+
 
 
