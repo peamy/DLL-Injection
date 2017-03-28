@@ -21,6 +21,7 @@ extern "C" __declspec(dllexport) void Initialize()
 	//Clear console window
 	std::cout.clear();
 
+
 	//Start main thread
 	running = true;
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)&Main, 0, 0, &this_threadid);
@@ -36,10 +37,12 @@ extern "C" __declspec(dllexport) void Unload()
 	//Give running threads a way to know we are unloading
 	running = false;
 
-	//Exit current thread and unload dll
-	FreeLibraryAndExitThread(this_hmodule, 0);
+	//We don't unload our module here,
+	//because when this function gets called from another thread
+	//MapleStory will freeze, don't know why,
+	//but it's better to unload the dll
+	//in Main() when it notices running = false
 }
-
 
 
 
@@ -48,17 +51,19 @@ void Main() {
 	std::string input;
 
 	std::cout << "Welcome to MapleInject!\n";
-	std::cout << "exit\tUnload dll from memory\n";
+	std::cout << "unload\tUnload dll from memory\n";
 	std::cout << "------------------------------\n";
 
-	while (true) {
+	while (running) {
 		std::cout << "> ";
 		getline(std::cin, input);
-		if (input.compare("exit") == 0) {
+		if (input.compare("unload") == 0) {
 			std::cout << "Unloading dll now.....\n";
 			Unload();
 		}
 	}
-}
 
+	//Finished, unload dll
+	FreeLibraryAndExitThread(this_hmodule, 0);
+}
 
