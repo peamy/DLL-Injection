@@ -25,7 +25,6 @@ extern "C" __declspec(dllexport) void Initialize()
 	//Clear console window
 	std::cout.clear();
 
-
 	//Start main thread
 	running = true;
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)&Main, 0, 0, &this_threadid);

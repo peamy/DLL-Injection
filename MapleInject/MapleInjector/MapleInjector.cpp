@@ -28,7 +28,7 @@ std::wstring injected_dll(L"MapleInject.dll");
 
 std::string thread_message("");
 
-bool auto_update = false;
+bool auto_update = true;
 bool running = false;
 
 ULONGLONG dll_last_updatetime = MAXULONGLONG; //prevent an update when dll version is first loaded and compared to last_version
@@ -104,25 +104,30 @@ struct injectiondata {
 
 
 
-//This function will get injected into another program
+//These functions will get injected into another program
 //C will work fine as long as we:
 //	Use pure C
 //	Don't use statically allocated variables(use volatile all the time)
 //	May not work when too many volatile variables are used at once(register overload)
 //	Don't use literal strings/arrays/whatever, numbers might be ok
-//	  pass all data through our injectiondata struct
+//To make more complicated injectable functions possible we:
+//	Pass all data through our injectiondata struct
+//	Pass all kernel32.dll exported function pointers through our injectiondata struct
+//    (kernel32.dll resides in a static location in memory even cross-process.
+//  Get pointers to functions of other libraries by using the kernel32.dll function GetProcAddress
+//  in combination with LoadLibraryW(to get a module handle by loading it)
+//  or GetModuleHandleW(to get a module handle by searching for it)
 
 extern "C" __declspec(dllexport) void injected_dll_loader(injectiondata *data){ //(char *path) {
 	//Load dll using User32 function LoadLibrary
 	volatile HMODULE mylib;
 	mylib = data->LoadLibraryW(data->path);
 
-
 	if (mylib == NULL) {
 		return;
 	}
 	
-	//Find Initialization function using User32 function GetProcAddress
+	//Find Initialization function
 	typedef void * (__stdcall *STDCALL_VOID)();
 
 	volatile STDCALL_VOID initialize = (STDCALL_VOID)data->GetProcAddress(mylib, data->name_initialize);
@@ -140,6 +145,7 @@ extern "C" __declspec(dllexport) void injected_dll_loader(injectiondata *data){ 
 
 extern "C" __declspec(dllexport) void injected_dll_unloader(injectiondata *data) { //(char *path) {
 																				 //Load dll using User32 function LoadLibrary
+	//Find handle to payload dll
 	volatile HMODULE mylib;
 	mylib = data->GetModuleHandleW(data->path);
 
@@ -149,7 +155,7 @@ extern "C" __declspec(dllexport) void injected_dll_unloader(injectiondata *data)
 		return;
 	}
 
-	//Find Initialization function using User32 function GetProcAddress
+	//Find Unload function using
 	typedef void * (__stdcall *STDCALL_VOID)();
 
 	volatile STDCALL_VOID unload = (STDCALL_VOID)data->GetProcAddress(mylib, data->name_unload);
@@ -166,7 +172,7 @@ extern "C" __declspec(dllexport) void injected_dll_unloader(injectiondata *data)
 
 
 
-
+//this function injects a function to be run into a process
 void InjectInto(DWORD pId, LPCVOID funct ) {
 	//Fill struct with data the injection function will need
 	//this will be placed in memory.
@@ -217,7 +223,10 @@ void InjectInto(DWORD pId, LPCVOID funct ) {
 	}
 }
 
-
+//this function loops through all loaded modules
+//in a process to check if our payload is already loaded
+//this is used to prevent double loading
+//and unloading when the payload isn't loaded.
 bool IsInjected(DWORD dwPID) {
 	HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
 	MODULEENTRY32 me32;
@@ -257,6 +266,11 @@ bool IsInjected(DWORD dwPID) {
 }
 
 
+//this function loops through all processes
+//and looks for the executable we want to inject into.
+//when found, injects or unloads
+//and also checks the executable path but only when
+//module_working_path is set to <auto>
 
 void inject_all(bool injecting) {
 	bool didsomething = false;
@@ -304,8 +318,14 @@ void inject_all(bool injecting) {
 						refreshconsole();
 					}
 				} else {
+					//Unloading
 					if (IsInjected(entry.th32ProcessID)) {
 						InjectInto(entry.th32ProcessID, &injected_dll_unloader);
+						while (IsInjected(entry.th32ProcessID)) {
+							//TODO: count amount of time waiting
+							//if >10 seconds, kill maplestory.
+							Sleep(500);
+						}
 						thread_message = "unloaded process " + std::to_string(entry.th32ProcessID);
 						didsomething = true;
 						refreshconsole();
@@ -317,7 +337,7 @@ void inject_all(bool injecting) {
 
 	CloseHandle(snapshot);
 	if (didsomething) {
-		Sleep(3000);
+		Sleep(500); //don't want to mess with dll loading/unloading while still loading/unloading...
 	}
 }
 
@@ -356,7 +376,13 @@ void dll_update_sequence() {
 	refreshconsole();
 }
 
-bool is_new_dll_available() {
+
+//This function checks the filetime of our
+//payload dll and compares it to the
+//last time it checked, calls
+//the update function when a newer dll version
+//is available.
+bool check_new_dll_available() {
 	if (module_working_path.length() > 0) {
 		char dllpath[MAX_PATH];
 		std::wcstombs(dllpath, injected_dll.c_str(), MAX_PATH);
@@ -406,14 +432,16 @@ bool is_new_dll_available() {
 }
 
 
-
+//main loop runs in a seperate thread
+//so we can accept input from the user
+//while we do stuff
 void loop() {
 	//loop through all open processes to find maplesaga
 	while (running) {
 		inject_all(true);
 		Sleep(500);
-		if (auto_update && is_new_dll_available()) {
-			dll_update_sequence();
+		if (auto_update) {
+			check_new_dll_available();
 		}
 	}
 }
@@ -426,12 +454,10 @@ void loop_start() {
 }
 
 void loop_stop() {
-	if (running) {
-		running = false;
-		if (mt.joinable()) {
-			mt.join();
-			mt.~thread();
-		}
+	running = false;
+	if (mt.joinable()) {
+		mt.join();
+		mt.~thread();
 	}
 }
 
@@ -442,6 +468,7 @@ int main()
 	//Enables debug privileges
 	EnableDebugPriv();
  
+
 	loop_start();
 
 	std::string input;
@@ -449,11 +476,12 @@ int main()
 	refreshconsole();
 
 	while (true) {
-		std::getline(std::cin, input); //freezes, but passes when console window is freed.
+		std::getline(std::cin, input); 
 		if (input.compare("exit") == 0) {
 			running = false;
 			thread_message = "Aborting all operations...";
 			refreshconsole();
+			loop_stop();
 			break;
 		} else if (input.compare("autoupdate") == 0) {
 			auto_update = !auto_update;
@@ -463,7 +491,6 @@ int main()
 		}
 	}
 
-	mt.join();
 
 	return 0;
 
