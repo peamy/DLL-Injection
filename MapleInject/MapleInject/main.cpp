@@ -9,8 +9,12 @@
 extern "C" __declspec(dllexport) void Initialize()
 {
 	//Try open console window
-	if (!AllocConsole())
-		MessageBox(NULL, L"Error creating console window", NULL, MB_ICONEXCLAMATION);
+	if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+		if (!AllocConsole())
+			MessageBox(NULL, L"Error creating console window", NULL, MB_ICONEXCLAMATION);
+	}
+
+	SetConsoleTitle(L"MapleInject");
 
 	//Connect stdin, stdout and stderr to the new console window
 	FILE* fp;
@@ -54,9 +58,10 @@ void Main() {
 	std::cout << "unload\tUnload dll from memory\n";
 	std::cout << "------------------------------\n";
 
+	//Don't put freezing code in this loop that doesn't check for running==true
 	while (running) {
 		std::cout << "> ";
-		getline(std::cin, input);
+		getline(std::cin, input); //freezes, but passes when console window is freed.
 		if (input.compare("unload") == 0) {
 			std::cout << "Unloading dll now.....\n";
 			Unload();

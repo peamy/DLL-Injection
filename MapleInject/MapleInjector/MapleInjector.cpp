@@ -7,6 +7,8 @@
 #include <tlhelp32.h>
 #include <string.h>
 #include <cwctype>
+#include <thread>
+#include <string>
 
 #define MODULE_NAME L"MapleInject.dll"
 #define MODULE_NAME_s "MapleInject.dll"
@@ -139,7 +141,18 @@ void InjectInto(DWORD pId, LPCVOID funct ) {
 	//Open maplesaga for access
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pId);
 
+
 	if (hProcess != NULL) {
+		//get full path so we know where to copy the dll in the future
+		LPWSTR path = new WCHAR[MAX_PATH];
+		DWORD sz = MAX_PATH;
+		QueryFullProcessImageName(hProcess, 0, path, &sz);
+
+		module_working_path = path;
+		module_working_path = module_working_path.substr(0, module_working_path.find_last_of('\\'));
+		module_working_path = module_working_path.append(L"\\");
+		module_working_path = module_working_path.append(MODULE_NAME);
+
 		//Allocate some memory to work with and
 		//write our function + data to it
 		void* pLibRemote = VirtualAllocEx(hProcess, NULL, 1024, MEM_COMMIT, PAGE_READWRITE);
@@ -200,9 +213,8 @@ bool IsInjected(DWORD dwPID) {
 	do
 	{
 		std::wstring s(me32.szExePath);
-		module_working_path = std::wstring(me32.szExePath);
+
 		if (s.compare(s.length() - 15, 15, MODULE_NAME) == 0) {
-			
 			return true;
 		}
 
@@ -261,6 +273,17 @@ bool is_new_dll_available() {
 	return false;
 }
 
+
+bool running;
+void loop() {
+	//loop through all open processes to find maplesaga
+	while (running) {
+		inject_all(true);
+		Sleep(500);
+	}
+}
+
+
 int main()
 {
 	std::cout << "Welcome to MapleStory autoinjector!\n";
@@ -268,16 +291,49 @@ int main()
 	//Enables debug privileges
 	EnableDebugPriv();
  
-	
-	//loop through all open processes to find maplesaga
+	running = true;
+
+	std::thread mt(loop);
+	std::string input;
+
 	while (true) {
-		inject_all(true);
-		if (is_new_dll_available()) {
-			inject_all(false);
-			CopyFile(MODULE_NAME, module_working_path.c_str(), false);
+		std::cout << "> ";
+		std::getline(std::cin, input); //freezes, but passes when console window is freed.
+		if (input.compare("exit") == 0) {
+			running = false;
+			break;
 		}
-		Sleep(500);
+		else if (input.compare("update") == 0) {
+			//kill thread
+			running = false;
+			mt.join();
+			mt.~thread();
+
+			std::cout << "Killed threads!\n";
+			
+			//unload all dll's otherwise we can't overwrite the loaded dll
+			inject_all(false);
+			std::cout << "Unloaded all!\n";
+
+
+			std::wcout << L"Copying \"" << MODULE_NAME << L"\" to \"" << module_working_path.c_str() << L"\"\n";
+
+			//wait a moment before copying, so we are sure everything is unloaded
+			Sleep(2000);
+			CopyFile(MODULE_NAME, module_working_path.c_str(), false);
+
+
+			std::cout << "Copied files!\n";
+
+			//now start the main thread again
+			running = true;
+			mt = std::thread(loop);
+			std::cout << "Starting threads again!\n";
+		}
 	}
+
+	mt.join();
+
 
 	std::cout << "Press any key to continue...";
 	std::cin.get();

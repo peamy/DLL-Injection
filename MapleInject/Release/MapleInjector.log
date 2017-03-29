@@ -1,10 +1,10 @@
 ﻿  MapleInjector.cpp
-MapleInjector.cpp(256): warning C4996: 'wcstombs': This function or variable may be unsafe. Consider using wcstombs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+MapleInjector.cpp(268): warning C4996: 'wcstombs': This function or variable may be unsafe. Consider using wcstombs_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.14393.0\ucrt\stdlib.h(1012): note: see declaration of 'wcstombs'
      Creating library F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInjector.lib and object F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInjector.exp
   Generating code
-  0 of 111 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+  18 of 278 functions ( 6.5%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   MapleInjector.vcxproj -> F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInjector.exe

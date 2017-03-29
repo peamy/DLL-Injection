@@ -1,8 +1,8 @@
 ﻿  main.cpp
      Creating library F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInject.lib and object F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInject.exp
   Generating code
-  2 of 89 functions ( 2.2%) were compiled, the rest were copied from previous compilation.
+  1 of 89 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    8 functions had inline decision re-evaluated but remain unchanged
+    7 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   MapleInject.vcxproj -> F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInject.dll
