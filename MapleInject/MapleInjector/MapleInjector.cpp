@@ -363,10 +363,10 @@ void dll_update_sequence() {
 	updating_status = "Copying dll files...";
 	refreshconsole();
 
-	CopyFile(injected_dll.c_str(), module_working_path.c_str(), false);
+	bool success = CopyFile(injected_dll.c_str(), module_working_path.c_str(), false);
 
 
-	updating_status = "Starting main thread...";
+	updating_status = (success ? "Copying success, " : "Copying failure, ") + std::string("Starting main thread...");
 	refreshconsole();
 
 	//now start the main thread again

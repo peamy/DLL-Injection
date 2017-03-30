@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "main.h"
+#include "hooks.h"
 
 
 //Call this function to start running the dll main function
@@ -53,6 +54,11 @@ extern "C" __declspec(dllexport) void Unload()
 void Main() {
 	std::string input;
 
+	std::cout << "Waiting 2 seconds...\n";
+	Sleep(2100);
+	std::cout << "Loading hooks...\n";
+	LoadHooks();
+	std::cout << "Hooks loaded!\n";
 	std::cout << "Welcome to MapleInject!\n";
 	std::cout << "unload\tUnload dll from memory\n";
 	std::cout << "------------------------------\n";
@@ -66,7 +72,6 @@ void Main() {
 			Unload();
 		}
 	}
-
 	//Finished, unload dll
 	FreeLibraryAndExitThread(this_hmodule, 0);
 }

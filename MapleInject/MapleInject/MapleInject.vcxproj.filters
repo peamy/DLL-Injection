@@ -33,6 +33,9 @@
     <ClInclude Include="main.h">
       <Filter>Source Files\main</Filter>
     </ClInclude>
+    <ClInclude Include="hooks.h">
+      <Filter>Source Files\hooks</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
