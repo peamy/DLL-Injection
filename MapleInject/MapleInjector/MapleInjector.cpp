@@ -272,8 +272,7 @@ bool IsInjected(DWORD dwPID) {
 //and also checks the executable path but only when
 //module_working_path is set to <auto>
 
-void inject_all(bool injecting) {
-	bool didsomething = false;
+void inject_all(bool injecting, bool immediate) {
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(PROCESSENTRY32);
 
@@ -311,9 +310,16 @@ void inject_all(bool injecting) {
 				//Next we can try to inject or unload dll's
 				if (injecting) {
 					if (!IsInjected(entry.th32ProcessID)) {
+						if (!immediate) {
+							Sleep(1000);
+						}
 						InjectInto(entry.th32ProcessID, &injected_dll_loader);
+						while (!IsInjected(entry.th32ProcessID)) {
+							//TODO: count amount of time waiting
+							//if >10 seconds, kill maplestory.
+							Sleep(500);
+						}
 						thread_message = "injected process " + std::to_string(entry.th32ProcessID);
-						didsomething = true;
 
 						refreshconsole();
 					}
@@ -327,7 +333,6 @@ void inject_all(bool injecting) {
 							Sleep(500);
 						}
 						thread_message = "unloaded process " + std::to_string(entry.th32ProcessID);
-						didsomething = true;
 						refreshconsole();
 					}
 				}
@@ -336,9 +341,6 @@ void inject_all(bool injecting) {
 	}
 
 	CloseHandle(snapshot);
-	if (didsomething) {
-		Sleep(500); //don't want to mess with dll loading/unloading while still loading/unloading...
-	}
 }
 
 
@@ -354,11 +356,8 @@ void dll_update_sequence() {
 	refreshconsole();
 
 	//unload all dll's otherwise we can't overwrite the loaded dll
-	inject_all(false);
+	inject_all(false, true);
 
-
-	//wait a moment before copying, so we are sure everything is unloaded
-	Sleep(2000);
 
 	updating_status = "Copying dll files...";
 	refreshconsole();
@@ -438,7 +437,7 @@ bool check_new_dll_available() {
 void loop() {
 	//loop through all open processes to find maplesaga
 	while (running) {
-		inject_all(true);
+		inject_all(true, false);
 		Sleep(500);
 		if (auto_update) {
 			check_new_dll_available();

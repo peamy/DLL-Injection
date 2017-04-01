@@ -19,6 +19,9 @@
     <Filter Include="Source Files\main">
       <UniqueIdentifier>{750db02c-6530-4bac-b109-e7c1f3a08525}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\memory">
+      <UniqueIdentifier>{4a67d595-b97b-42dd-8ae4-f49ce69af441}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -36,6 +39,9 @@
     <ClInclude Include="hooks.h">
       <Filter>Source Files\hooks</Filter>
     </ClInclude>
+    <ClInclude Include="memory.h">
+      <Filter>Source Files\memory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -47,14 +53,14 @@
     <ClCompile Include="filters.cpp">
       <Filter>Source Files\hooks</Filter>
     </ClCompile>
-    <ClCompile Include="address.cpp">
-      <Filter>Source Files\hooks</Filter>
-    </ClCompile>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files\main</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files\main</Filter>
+    </ClCompile>
+    <ClCompile Include="memory.cpp">
+      <Filter>Source Files\memory</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

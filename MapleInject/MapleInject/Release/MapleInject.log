@@ -1,7 +1,10 @@
-﻿  main.cpp
+﻿  hooks.cpp
+hooks.cpp(18): warning C4838: conversion from 'int' to 'char' requires a narrowing conversion
+hooks.cpp(18): warning C4309: 'initializing': truncation of constant value
+hooks.cpp(51): warning C4018: '<': signed/unsigned mismatch
      Creating library F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInject.lib and object F:\MapleInject\DLL-Injection\MapleInject\Release\MapleInject.exp
   Generating code
-  1 of 94 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
+  2 of 142 functions ( 1.4%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
